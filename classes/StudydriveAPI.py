@@ -68,7 +68,9 @@ class StudydriveAPI:
         return req.json()
 
     def joinAllCourses(self, universityID):
-        pass
+        headers = {"authorization": "Bearer " + self.token}
+        req = requests.get('{}/api/app/v1/universities/{}/courses'.format(self.baseurl, universityID), headers = headers)
+        return req.json()
 
     def getDocumentInformation(self, docID):
         pass
