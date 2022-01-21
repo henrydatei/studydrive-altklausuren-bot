@@ -70,7 +70,35 @@ class StudydriveAPI:
     def joinAllCourses(self, universityID):
         headers = {"authorization": "Bearer " + self.token}
         req = requests.get('{}/api/app/v1/universities/{}/courses'.format(self.baseurl, universityID), headers = headers)
+        courses = req.json()
+        for course in courses:
+            self.joinCourse(course["course_id"])
+
+    def getMyCourses(self):
+        headers = {"authorization": "Bearer " + self.token}
+        req = requests.get('{}api/app/v1/users/left_sidebar'.format(self.baseurl), headers = headers)
+        req.raise_for_status()
         return req.json()
+
+    def setCourseOrder(self, courses):
+        headers = {"authorization": "Bearer " + self.token}
+        req = requests.post('{}api/app/v1/community/order'.format(self.baseurl), headers = headers, data = {'context':'course', 'ids[]': courses})
+        req.raise_for_status()
+        return req.json()
+
+    def sortCourses(self):
+        list = []
+        ids = []
+        courses = self.getMyCourses()
+        for courseData in courses['courses']:
+            courseID = courseData['course_id']
+            courseName = courseData['course_name']
+            list.append([courseID,courseName])
+        sortedList = sorted(list, key = lambda tup: tup[1])
+        for courseData in sortedList:
+            id = courseData[0]
+            ids.append(id)
+        print(self.setCourseOrder(ids[::-1]))
 
     def getDocumentInformation(self, docID):
         pass
