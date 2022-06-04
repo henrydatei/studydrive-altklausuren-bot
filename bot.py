@@ -1,5 +1,8 @@
-from classes.StudydriveAPI import StudydriveAPI
+from studydrive import studydriveapi
 from tqdm import tqdm
+import os
+
+universityID = 894 # TU Dresden
 
 try:
     file = open("main-account.txt")
@@ -16,9 +19,30 @@ except:
 finally:
     file.close()
 
-api = StudydriveAPI(email, password)
-api.joinAllCourses(894)
-api.sortCourses()
+api = studydriveapi.StudydriveAPI()
+api.login(email, password)
+
+# join all courses
+myCourseIDs = []
+courseIDs = []
+for myCourse in api.getMyCourses()["courses"]:
+    myCourseIDs.append(myCourse["id"])
+for course in api.getUniversityCourses(universityID):
+    courseIDs.append(course["course_id"])
+for courseID in tqdm(set(courseIDs) - set(myCourseIDs)):
+    api.joinCourse(courseID)
+
+# download everything
+if not os.path.exists("downloads"):
+    os.makedirs("downloads")
 
 for myCourse in tqdm(api.getMyCourses()["courses"]):
-    api.saveAllFilesOfACourse(myCourse["id"])
+    for file in api.getFileListofCourse(myCourse["id"]):
+        if file["file_type"] == 60:
+            docID = file["file_id"]
+            docInfo = api.getDocumentDetails(docID)
+            folder = docInfo["file"]["course_name"]
+            filename = docInfo["file"]["file_name"]
+            if not os.path.exists("downloads/" + folder):
+                os.makedirs("downloads/" + folder)
+            api.saveDocument(docID, "downloads/{}/{}-{}".format(folder, docID, filename))
